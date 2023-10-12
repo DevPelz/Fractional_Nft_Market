@@ -70,7 +70,7 @@ contract Vault is IERC721Receiver {
         uint256 _fractions,
         uint256 _Listprice
     ) external {
-        ERC721(_nftAddress).safeTransferFrom(
+        IERC721(_nftAddress).safeTransferFrom(
             msg.sender,
             address(this),
             _tokenId
