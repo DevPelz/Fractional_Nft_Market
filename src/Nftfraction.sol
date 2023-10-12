@@ -169,7 +169,7 @@ contract Vault is IERC721Receiver {
 
         // delete vault
         NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
-        delete vaults[vault.seller];
+        delete _vaults[vault.seller];
         delete vaultPosition[_nftAddress][_tokenId];
 
         // transfer nft to msg.sender
@@ -179,5 +179,14 @@ contract Vault is IERC721Receiver {
             msg.sender,
             _tokenId
         );
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external pure override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
     }
 }
