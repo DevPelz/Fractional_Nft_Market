@@ -25,6 +25,14 @@ contract Fractions is ERC20 {
     ) ERC20(name_, symbol_) {
         _mint(msg.sender, _frac);
     }
+
+    function _burn(uint256 amount) external virtual {
+        require(
+            amount <= balanceOf(msg.sender),
+            "ERC20: burn amount exceeds balance"
+        );
+        _burn(msg.sender, amount);
+    }
 }
 
 contract Vault is IERC721Receiver {
@@ -37,7 +45,7 @@ contract Vault is IERC721Receiver {
     // vault array
     NftVault[] public vaults;
 
-    mapping(address => NftVault) public _vaults;
+    mapping(address => NftVault[]) public _vaults;
     mapping(address => mapping(uint256 => uint256)) public vaultPosition;
 
     // events
@@ -58,8 +66,8 @@ contract Vault is IERC721Receiver {
         uint256 tokenId,
         uint256 fractions,
         uint256 timestamp,
-        uint256 Listprice,
-        address FractionTokens
+        uint256 Listprice
+        // address FractionTokens
     );
 
     // create a fraction based on the nft
@@ -76,14 +84,14 @@ contract Vault is IERC721Receiver {
             _tokenId
         );
 
-        vaultPosition[_nftAddress][_tokenId] = vaults[msg.sender];
+        vaultPosition[_nftAddress][_tokenId] = _vaults[_nftAddress].length;
         Fractions _FractionTokens = new Fractions(
             "Fractional NFT",
             "FracNFT",
             _fractions
         );
 
-        vaults.push(
+        _vaults[_nftAddress].push(
             NftVault({
                 seller: msg.sender,
                 nftAddress: _nftAddress,
@@ -112,7 +120,8 @@ contract Vault is IERC721Receiver {
         address _nftAddress,
         uint256 _tokenId
     ) external payable {
-        NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
+        uint256 vaultI = vaultPosition[_nftAddress][_tokenId];
+        NftVault storage vault = _vaults[_nftAddress][vaultI];
 
         //   check price of fraction
         Fractions _FractionTokens = Fractions(vault.FractionTokens);
@@ -148,15 +157,15 @@ contract Vault is IERC721Receiver {
             _tokenId,
             _amount,
             block.timestamp,
-            vault.Listprice,
-            vault.FractionTokens
+            vault.Listprice
         );
     }
 
     // withdraw nft
 
     function deListNft(address _nftAddress, uint256 _tokenId) external {
-        NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
+        uint256 vaultI = vaultPosition[_nftAddress][_tokenId];
+        NftVault storage vault = _vaults[_nftAddress][vaultI];
 
         // check that msg.sender has all the fraction tokens totalling to the total supply
         Fractions _FractionTokens = Fractions(vault.FractionTokens);
@@ -165,10 +174,9 @@ contract Vault is IERC721Receiver {
         require(_frac == _totalSupply, "You do not own all the fractions");
 
         // burn all fractions
-        _FractionTokens.burn(_frac);
+        _FractionTokens._burn(_frac);
 
         // delete vault
-        NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
         delete _vaults[vault.seller];
         delete vaultPosition[_nftAddress][_tokenId];
 
