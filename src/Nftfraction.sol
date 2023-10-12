@@ -152,4 +152,32 @@ contract Vault is IERC721Receiver {
             vault.FractionTokens
         );
     }
+
+    // withdraw nft
+
+    function deListNft(address _nftAddress, uint256 _tokenId) external {
+        NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
+
+        // check that msg.sender has all the fraction tokens totalling to the total supply
+        Fractions _FractionTokens = Fractions(vault.FractionTokens);
+        uint256 _frac = _FractionTokens.balanceOf(msg.sender);
+        uint256 _totalSupply = _FractionTokens.totalSupply();
+        require(_frac == _totalSupply, "You do not own all the fractions");
+
+        // burn all fractions
+        _FractionTokens.burn(_frac);
+
+        // delete vault
+        NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
+        delete vaults[vault.seller];
+        delete vaultPosition[_nftAddress][_tokenId];
+
+        // transfer nft to msg.sender
+
+        IERC721(_nftAddress).safeTransferFrom(
+            address(this),
+            msg.sender,
+            _tokenId
+        );
+    }
 }
