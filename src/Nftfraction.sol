@@ -113,12 +113,12 @@ contract Vault is IERC721Receiver {
         uint256 _tokenId
     ) external payable {
         NftVault storage vault = vaultPosition[_nftAddress][_tokenId];
-        require(msg.value >= vault.Listprice, "Not enough funds");
 
         //   check price of fraction
         Fractions _FractionTokens = Fractions(vault.FractionTokens);
         uint256 _frac = _FractionTokens.totalSupply();
         uint256 _price = vault.Listprice / vault.fractions;
+        require(msg.value >= _price, "Not enough funds to buy");
         uint256 _amount = msg.value / _price;
         require(_frac >= _amount, "Not enough fractions to buy");
 
