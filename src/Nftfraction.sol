@@ -26,12 +26,8 @@ contract Fractions is ERC20 {
         _mint(msg.sender, _frac);
     }
 
-    function _burn(uint256 amount) external virtual {
-        require(
-            amount <= balanceOf(msg.sender),
-            "ERC20: burn amount exceeds balance"
-        );
-        _burn(msg.sender, amount);
+    function burn(address operator, uint256 amount) external virtual {
+        _burn(operator, amount);
     }
 }
 
@@ -41,9 +37,6 @@ contract Vault is IERC721Receiver {
     constructor() {
         owner = msg.sender;
     }
-
-    // vault array
-    NftVault[] public vaults;
 
     mapping(address => NftVault[]) public _vaults;
     mapping(address => mapping(uint256 => uint256)) public vaultPosition;
@@ -133,7 +126,7 @@ contract Vault is IERC721Receiver {
 
         // update the fraction tokens
         vault.fractions -= _amount;
-        _FractionTokens.transferFrom(vault.seller, msg.sender, _amount);
+        _FractionTokens.transfer(msg.sender, _amount);
 
         // calculate 0.1% from the price of each fraction
         uint256 fee = _price / 1000;
@@ -174,7 +167,7 @@ contract Vault is IERC721Receiver {
         require(_frac == _totalSupply, "You do not own all the fractions");
 
         // burn all fractions
-        _FractionTokens._burn(_frac);
+        _FractionTokens.burn(msg.sender, _frac);
 
         // delete vault
         delete _vaults[vault.seller];
